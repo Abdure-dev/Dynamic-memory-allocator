@@ -28,7 +28,27 @@
 
 //create a heap with an intial free block
 static char *heap_listp;
-static void *extend_heap(size_t words);
+static void *coalesce(void *bp);
+static void *extend_heap(size_t words){
+  size_t size;
+  char *p;
+  if((words%2) != 0){
+    size = (words + 1)*WSIZE;
+  }else{
+    size = words*WSIZE;
+    }
+   p = mem_sbrk(size);
+   if((long)p == -1)
+     return NULL;
+/*Intialize fre block heade/footer and teh epilogue header*/
+ PUT(HDRP(p), PACK(size,0)); /*Free block header */
+ PUT(FTRP(p), PACK(size,0));/*Free block footer */
+ //next epilogue
+ PUT(HDRP(NEXT_BLKP(p)), PACK(0,1));
+ /*Coalesce if teh previous block was free */
+  return coalesce(p);
+
+}
 int mm_init(void){
   //mem_sbrk: returns old_brk = the first of the 16 new bytes
  char *old_brk = mem_sbrk(4*WSIZE);
